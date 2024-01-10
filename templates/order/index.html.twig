@@ -1,0 +1,46 @@
+{% extends 'base.html.twig' %}
+
+{% block title %}Liste des Commandes{% endblock %}
+
+{% block body %}
+    <style>
+        body { font-family: 'Arial', sans-serif; background-color: #f8f9fa; }
+        .container { margin: 20px auto; max-width: 1200px; }
+        .header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; }
+        .logo { max-width: 200px; max-height: 80px; margin-right: 20px; } /* Ajuste la largeur et la hauteur du logo ici */
+        .order-card { border: 1px solid #ddd; padding: 30px; margin-bottom: 30px; background-color: #fff; }
+        .article-card { border: 1px solid #eee; padding: 20px; margin-bottom: 20px; background-color: #fff; }
+        .download-button { background-color: #007bff; color: #fff; padding: 10px 20px; text-decoration: none; border-radius: 5px; }
+        .download-icon { margin-right: 5px; }
+    </style>
+
+    <div class="container">
+        <div class="header">
+            <img src="{{ asset('logo.png') }}" alt="Your Logo" class="logo">
+            <h1>Liste des Commandes</h1>
+        </div>
+
+        {% for result in results %}
+            <div class="order-card">
+                <h2>Commande {{ result.OrderNumber }}</h2>
+                <p>Montant: {{ result.Amount }} {{ result.Currency }}</p>
+                <p>Destinataire: {{ result.DeliverTo }}</p>
+
+                <h3>Détails des Articles:</h3>
+                {% for line in result.SalesOrderLines.results %}
+                    <div class="article-card">
+                        <p>Article: {{ line.Description }}</p>
+                        <p>Quantité: {{ line.Quantity }}</p>
+                        <p>Prix unitaire: {{ line.UnitPrice }} {{ result.Currency }}</p>
+                        <!-- Ajoutez d'autres détails d'article si nécessaire -->
+                    </div>
+                {% endfor %}
+            </div>
+        {% endfor %}
+
+        <a  class="download-button">
+            <i class="download-icon fas fa-download"></i> Télécharger le fichier CSV
+        </a>
+
+    </div>
+{% endblock %}

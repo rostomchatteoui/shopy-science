@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Welcome!{% endblock %}</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background-color: #f8f9fa;
+            margin: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            height: 100vh;
+        }
+
+        .welcome-container {
+            text-align: center;
+        }
+
+        .welcome-heading {
+            font-size: 36px;
+            color: #007bff;
+            margin-bottom: 20px;
+        }
+
+        .emoji {
+            font-size: 48px;
+        }
+    </style>
+    {% block stylesheets %}
+    {% endblock %}
+</head>
+<body>
+<div class="welcome-container">
+    <h1 class="welcome-heading">{% block welcome_title %}Welcome!{% endblock %}</h1>
+    <p>Your content goes here.</p>
+    <span class="emoji">⚫️</span>
+
+
+</div>
+
+{% block javascripts %}
+    {% block importmap %}{{ importmap('app') }}{% endblock %}
+{% endblock %}
+</body>
+</html>
