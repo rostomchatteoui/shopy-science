@@ -1,6 +1,4 @@
-{% extends 'base.html.twig' %}
-
-{% block title %}Liste des Commandes{% endblock %}
+{% block title %}{% endblock %}
 
 {% block body %}
     <style>
@@ -20,6 +18,7 @@
             <h1>Liste des Commandes</h1>
         </div>
 
+        {# Display existing orders #}
         {% for result in results %}
             <div class="order-card">
                 <h2>Commande {{ result.OrderNumber }}</h2>
@@ -38,9 +37,11 @@
             </div>
         {% endfor %}
 
-        <a  class="download-button">
-            <i class="download-icon fas fa-download"></i> Télécharger le fichier CSV
-        </a>
-
+        {# Add a form to trigger the orders_to_csv flow #}
+        <form action="{{ path('app_orders_to_csv') }}" method="get">
+            <button type="submit" class="download-button">
+                <i class="download-icon fas fa-download"></i> Télécharger le fichier CSV
+            </button>
+        </form>
     </div>
 {% endblock %}

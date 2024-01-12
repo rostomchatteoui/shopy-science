@@ -186,16 +186,16 @@ class Article
         //return $this;
     //}
 
-    //public function getQuantity(): ?int
-    //{
-        //return $this->Quantity;
-    //}
+    public function getQuantity(): ?int
+    {
+        return $this->Quantity;
+    }
 
-    //public function setQuantity(int $Quantity): static
-    //{
-      //  $this->Quantity = $Quantity;
+    public function setQuantity(int $Quantity): static
+    {
+        $this->Quantity = $Quantity;
 
-        //return $this;
-    //}
+        return $this;
+    }
 
 }

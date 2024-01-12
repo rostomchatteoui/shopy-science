@@ -10,6 +10,8 @@ use Symfony\Contracts\HttpClient\HttpClientInterface;
 use Doctrine\ORM\EntityManagerInterface;
 use App\Repository\OrderRepository;
 use League\Csv\Writer;
+use Symfony\Contracts\HttpClient\Exception\TransportExceptionInterface;
+
 
 
 class OrderController extends AbstractController
@@ -24,7 +26,9 @@ class OrderController extends AbstractController
         $this->entityManager = $entityManager;
     }
 
-    #[Route('/order', name: 'app_order')]
+
+    #[Route('/orders', name: 'app_order')]
+
 
     public function ordersList(): Response
     {
@@ -46,11 +50,9 @@ class OrderController extends AbstractController
         ]);
     }
     #[Route('/flow/orders_to_csv', name: 'app_orders_to_csv')]
-    public function exportOrdersToCsv(OrderRepository $orderRepository): Response
+    public function exportOrdersToCsv(OrderRepository $orderRepository, EntityManagerInterface $entityManager): Response
     {
-        // ...
-        $orders = $orderRepository->findAll();
-
+        // Step 1: Retrieve new orders from the API
         $apiUrl = 'https://internshipapi-pylfsebcoa-ew.a.run.app';
         $apiKey = 'PMAK-62642462da39cd50e9ab4ea7-815e244f4fdea2d2075d8966cac3b7f10b';
 
@@ -60,58 +62,65 @@ class OrderController extends AbstractController
             ],
         ]);
 
-        $data = $response->toArray();
+        $newOrders = $response->toArray()['results'];
 
-
-        // Stocker les commandes en base de données
-        foreach ($data['results'] as $orderData) {
+        // Step 2: Store new orders in the database
+        foreach ($newOrders as $newOrderData) {
             $order = new Order();
-            $order->setOrderNumber($orderData['OrderNumber']);
-            $order->setAmount($orderData['Amount']);
-            $order->setCurrency($orderData['Currency']);
-            $order->setDeliverTo($orderData['DeliverTo']);
+            $order->setOrderNumber($newOrderData['OrderNumber']);
+            $order->setAmount($newOrderData['Amount']);
+            $order->setCurrency($newOrderData['Currency']);
+            $order->setDeliverTo($newOrderData['DeliverTo']);
 
-            // Ajouter les articles associés à la commande
-            foreach ($orderData['SalesOrderLines']['results'] as $articleData) {
+            foreach ($newOrderData['SalesOrderLines']['results'] as $articleData) {
                 $article = new Article();
                 $article->setDescription($articleData['Description']);
-                //$article->setQuantity($articleData['Quantity']);
-                // Ajouter d'autres attributs d'article si nécessaire
+                $article->setQuantity($articleData['Quantity']);
+                $article->setUnitPrice($articleData['UnitPrice']);
 
+                // Assume you have a bidirectional relationship between Order and Article
                 $order->addSalesOrderLine($article);
 
-                // À implémenter en utilisant les données des commandes
-                // Vous pouvez accéder aux données de l'article ici et effectuer les opérations nécessaires
-
-                // Exemple :
-                // $article->setUnitPrice($articleData['UnitPrice']);
-                // $article->setVATAmount($articleData['VATAmount']);
-                // $article->setVATPercentage($articleData['VATPercentage']);
-
-                // Enregistrer l'article en base de données
-// Enregistrer l'article en base de données
-                $this->entityManager->persist($article);
+                // Persist the article (if needed)
+                $entityManager->persist($article);
             }
 
-            // Enregistrer l'ordre en base de données
-            $this->entityManager->persist($order);
+            // Persist the order
+            $entityManager->persist($order);
         }
 
-        // Exécuter les opérations d'enregistrement
-        $this->entityManager->flush();
+        // Flush changes to the database
+        $entityManager->flush();
 
-        // ...
+        // Step 3: Generate and return a CSV response
+        $csvWriter = Writer::createFromString('');
+        $csvWriter->insertOne(['OrderNumber', 'Amount', 'Currency', 'DeliverTo', 'Description', 'Quantity', 'UnitPrice']);
 
-        // Répondre avec le fichier CSV
-        // ...
+        foreach ($newOrders as $newOrderData) {
+            foreach ($newOrderData['SalesOrderLines']['results'] as $articleData) {
+                $csvWriter->insertOne([
+                    $newOrderData['OrderNumber'],
+                    $newOrderData['Amount'],
+                    $newOrderData['Currency'],
+                    $newOrderData['DeliverTo'],
+                    $articleData['Description'],
+                    $articleData['Quantity'],
+                    $articleData['UnitPrice'],
+                ]);
+            }
+        }
 
-        return new Response('Le fichier CSV a été généré et téléchargé avec succès.');
+        $response = new Response($csvWriter->toString());
+        $response->headers->set('Content-Type', 'text/csv');
+        $response->headers->set('Content-Disposition', 'attachment; filename="export.csv"');
 
+        return $response;
     }
+
+
     #[Route('/', name: 'home')]
     public function index(): Response
     {
         return $this->render('base.html.twig');
     }
-
 }
